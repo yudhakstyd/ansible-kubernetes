@@ -1,0 +1,26 @@
+- name: Configure Join Commands on Master Node
+  hosts: master
+  become: true
+  vars_files:
+    - ../vault/root_password.yaml
+  tasks:
+    - name: Retrieve Join Command
+      shell: kubeadm token create --print-join-command
+      register: join_command_raw
+
+    - name: Set Join Command
+      set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+- name: Join Worker Nodes
+  hosts: workers
+  become: true
+  tasks:
+    - name: Enable TCP port 6443 (On Master) is able to connect from Worker
+      wait_for: "host=172.16.250.9 port=6443 timeout=1"
+
+    - name: Join worker to cluster
+      shell: "{{ hostvars['masternode'].join_command }} >> node_joined.log"
+      args:
+        chdir: /root
+        creates: node_joined.log
