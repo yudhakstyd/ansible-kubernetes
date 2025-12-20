@@ -1,0 +1,14 @@
+---
+# Variables for all hosts
+
+# Kubernetes version
+kubernetes_version: "1.29"
+
+# Pod network CIDR
+pod_network_cidr: "10.244.0.0/16"
+
+# Container runtime
+container_runtime: containerd
+
+# Calico version
+calico_version: "v3.30.0"

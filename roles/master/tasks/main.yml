@@ -1,0 +1,50 @@
+---
+# Initialize Kubernetes master node
+
+- name: Create kubeadm config file
+  copy:
+    content: |
+      kind: ClusterConfiguration
+      apiVersion: kubeadm.k8s.io/v1beta3
+      networking:
+        podSubnet: "{{ pod_network_cidr }}"
+      ---
+      kind: KubeletConfiguration
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      runtimeRequestTimeout: "15m"
+      cgroupDriver: "systemd"
+      systemReserved:
+        cpu: 100m
+        memory: 350M
+      kubeReserved:
+        cpu: 100m
+        memory: 50M
+      enforceNodeAllocatable:
+      - pods
+    dest: /etc/kubernetes/kubeadm-config.yaml
+
+- name: Initialize Kubernetes cluster
+  shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+  args:
+    chdir: /root
+    creates: cluster_initialized.log
+
+- name: Create .kube directory
+  file:
+    path: /root/.kube
+    state: directory
+    mode: 0755
+
+- name: Copy admin.conf to user kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+    owner: root
+    mode: 0600
+
+- name: Install Calico network operator
+  shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/refs/heads/master/manifests/calico.yaml >> pod_network_setup.log
+  args:
+    chdir: /root
+    creates: pod_network_setup.log

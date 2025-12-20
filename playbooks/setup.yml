@@ -1,0 +1,29 @@
+---
+# Playbook to setup Kubernetes dependencies on all nodes
+
+- name: Setup Kubernetes Prerequisites
+  hosts: all
+  become: true
+  vars_files:
+    - ../vault/root_password.yaml
+  
+  pre_tasks:
+    - name: Display setup information
+      debug:
+        msg: "Setting up Kubernetes prerequisites on {{ inventory_hostname }}"
+
+  roles:
+    - common
+    - containerd
+    - kubernetes
+
+  post_tasks:
+    - name: Reboot all nodes
+      reboot:
+        msg: "Rebooting for kernel parameter changes"
+        reboot_timeout: 300
+
+    - name: Wait for nodes to come back online
+      wait_for_connection:
+        delay: 10
+        timeout: 300

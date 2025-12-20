@@ -1,0 +1,8 @@
+---
+# Variables specific to master nodes
+
+# Master node API server address
+api_server_address: "172.16.250.9"
+
+# API server port
+api_server_port: 6443

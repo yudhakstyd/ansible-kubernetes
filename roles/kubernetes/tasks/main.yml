@@ -1,0 +1,38 @@
+---
+# Install Kubernetes components
+
+- name: Add Kubernetes apt-key
+  get_url:
+    url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+    mode: "0644"
+    force: true
+
+- name: Add Kubernetes APT repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+    state: present
+    update_cache: yes
+
+- name: Install kubelet
+  apt:
+    name: kubelet=1.29.*
+    state: present
+    update_cache: yes
+
+- name: Install kubeadm
+  apt:
+    name: kubeadm=1.29.*
+    state: present
+
+- name: Enable kubelet service
+  service:
+    name: kubelet
+    enabled: yes
+
+- name: Install kubectl (master only)
+  apt:
+    name: kubectl=1.29.*
+    state: present
+    force: yes
+  when: "'master' in group_names"

@@ -1,0 +1,48 @@
+---
+# Complete Kubernetes cluster deployment playbook
+
+- name: Complete Kubernetes Cluster Setup
+  import_playbook: setup.yml
+
+- name: Initialize Master Node
+  import_playbook: kube_master.yml
+
+- name: Join Worker Nodes
+  import_playbook: kube_workers.yml
+
+- name: Verify Cluster
+  hosts: master
+  become: true
+  vars_files:
+    - ../vault/root_password.yaml
+  
+  tasks:
+    - name: Wait for all nodes to be ready
+      shell: kubectl get nodes --no-headers | grep -v Ready | wc -l
+      register: not_ready_nodes
+      until: not_ready_nodes.stdout == "0"
+      retries: 30
+      delay: 10
+      changed_when: false
+
+    - name: Get cluster information
+      command: kubectl get nodes -o wide
+      register: cluster_nodes
+      changed_when: false
+
+    - name: Display cluster status
+      debug:
+        msg: "{{ cluster_nodes.stdout_lines }}"
+
+    - name: Get all pods
+      command: kubectl get pods -A
+      register: all_pods
+      changed_when: false
+
+    - name: Display all pods
+      debug:
+        msg: "{{ all_pods.stdout_lines }}"
+
+    - name: Cluster setup complete
+      debug:
+        msg: "Kubernetes cluster is ready!"

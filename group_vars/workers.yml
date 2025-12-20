@@ -1,0 +1,5 @@
+---
+# Variables specific to worker nodes
+
+# Join timeout
+join_timeout: 300
